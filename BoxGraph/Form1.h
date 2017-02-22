@@ -12,13 +12,14 @@ using namespace System::IO::Ports;
 #define BOOST_THREAD_USE_DLL
 boost::timer::cpu_timer timer,reached_end;
 std::vector<double> xs,vals,cnts;
-bool ready=false;
-bool written=true;
-bool started=false;
-double BoxCarVal;
-long int Counter;
-long int cumulative=0;
-const int NUM_OF_PULSES=80;
+bool ready=false; // Is measurement value ready?
+bool written=true; // Has the final measurement value for packet of pulses been written to textBox?
+bool started=false; // Is measurement stared?
+double BoxCarVal; // Measured value
+long int Counter; // Number of pulses during last step
+long int cumulative=0; // Number of pulses since the start of measurement;
+const int NUM_OF_PULSES=80; //Number of pulses per wavelength in a scan
+const int PULSE_TIMEOUT=10; // Wait how long after last pulse train to detect the end of meaurement
 namespace Escort {
 
 	using namespace System;
@@ -268,17 +269,17 @@ namespace Escort {
 	private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e) {
 
 				 double x;
-				 BoxCar->Write("?1\r");
-				 BoxCar->Write("?c\r");
+				 BoxCar->Write("?1\r"); // Whats the value of analog input 1?
+				 BoxCar->Write("?c\r"); // Whats the state of counter C2?/ Reset said counter;
 				 if (!started&&Counter>0) {
 					 started=true;
 					 timer.stop();
 					 timer.start();
 					 reached_end.stop();
-					 reached_end.start();
+					 reached_end.start();// Reset timer counting from last pulse
 
 				 }
-				 if (started&&reached_end.elapsed().wall>5e9) {
+				 if (started&&reached_end.elapsed().wall>PULSE_TIMEOUT*1e9) {
 					 started=false;
 					 timer1->Enabled=false;
 					 textBox1->BackColor=Color::FromName("LimeGreen");
@@ -315,10 +316,10 @@ namespace Escort {
 				 ABut->Enabled=false;
 				 BoxCar->NewLine="\r";
 				 BoxCar->Open();
-				 BoxCar->Write("W0\r");
-				 BoxCar->Write("C\r");
-				 BoxCar->Write("?c\r");
-				 BoxCar->ReadLine();
+				 BoxCar->Write("W0\r"); // Set delay to 0
+				 BoxCar->Write("C\r"); // Set digital 2 as input and make it a counter;
+				 BoxCar->Write("?c\r"); //Read the value of counter and reset it;
+				 BoxCar->ReadLine(); // Discar the cvounter value;
 				 std::cout<<"Ports are open"<<std::endl;
 				 timer.start();
 			 }
@@ -343,9 +344,9 @@ namespace Escort {
 				 Counter=counter;
 				 cumulative+=counter;
 				 if (counter!=0) written=false;
-				 if (cumulative % NUM_OF_PULSES==0&&cumulative!=0&&!written)
+				 if (cumulative % NUM_OF_PULSES==0&&cumulative!=0&&!written)//Last point in a packet of pulses
 				 {
-					 textBox1->Text+=cumulative.ToString()+" "+BoxCarVal.ToString()+"\r\n";
+					 textBox1->Text+=cumulative.ToString()+" "+BoxCarVal.ToString()+"\r\n"; 
 					 written=true;
 				 }
 				 Console::WriteLine(line);
