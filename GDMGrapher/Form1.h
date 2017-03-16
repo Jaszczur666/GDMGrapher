@@ -10,16 +10,13 @@ int i=0;
 using namespace System::IO;
 using namespace System::IO::Ports;
 #define BOOST_THREAD_USE_DLL
-boost::timer::cpu_timer timer,reached_end;
-std::vector<double> xs,vals,cnts;
+boost::timer::cpu_timer timer;
+std::vector<double> xs,vals;
+double begin=0;
+double end=0;
 bool ready=false; // Is measurement value ready?
-bool written=true; // Has the final measurement value for packet of pulses been written to textBox?
-bool started=false; // Is measurement stared?
 double BoxCarVal; // Measured value
-long int Counter; // Number of pulses during last step
-long int cumulative=0; // Number of pulses since the start of measurement;
-int NUM_OF_PULSES=80; //Number of pulses per wavelength in a scan
-const int PULSE_TIMEOUT=10; // Wait how long after last pulse train to detect the end of meaurement
+long int StepNum=0; 
 namespace Escort {
 
 	using namespace System;
@@ -79,12 +76,24 @@ namespace Escort {
 	private: System::Windows::Forms::SaveFileDialog^  saveFileDialog1;
 	private: System::Windows::Forms::Button^  ABut;
 	private: System::Windows::Forms::TextBox^  textBox1;
-	private: System::Windows::Forms::TextBox^  PulseTB;
 
-	private: System::Windows::Forms::Button^  PulseButt;
+
+
 	private: System::Windows::Forms::StatusStrip^  statusStrip1;
 	private: System::Windows::Forms::ToolStripStatusLabel^  NMBPLSLBL;
 	private: System::Windows::Forms::ToolStripStatusLabel^  StanLBL;
+	private: System::Windows::Forms::Label^  label2;
+	private: System::Windows::Forms::ComboBox^  MotorBox;
+	private: System::IO::Ports::SerialPort^  Motor;
+	private: System::Windows::Forms::TextBox^  BeginTB;
+	private: System::Windows::Forms::TextBox^  EndTB;
+
+
+	private: System::Windows::Forms::Label^  label3;
+	private: System::Windows::Forms::Label^  label4;
+	private: System::Windows::Forms::Panel^  panel1;
+	private: System::Windows::Forms::ToolStripProgressBar^  toolStripProgressBar1;
+
 
 
 
@@ -107,8 +116,7 @@ namespace Escort {
 		{
 			this->components = (gcnew System::ComponentModel::Container());
 			System::Windows::Forms::DataVisualization::Charting::ChartArea^  chartArea2 = (gcnew System::Windows::Forms::DataVisualization::Charting::ChartArea());
-			System::Windows::Forms::DataVisualization::Charting::Series^  series3 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
-			System::Windows::Forms::DataVisualization::Charting::Series^  series4 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
+			System::Windows::Forms::DataVisualization::Charting::Series^  series2 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
 			this->chart1 = (gcnew System::Windows::Forms::DataVisualization::Charting::Chart());
 			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
 			this->BoxCar = (gcnew System::IO::Ports::SerialPort(this->components));
@@ -122,33 +130,36 @@ namespace Escort {
 			this->saveFileDialog1 = (gcnew System::Windows::Forms::SaveFileDialog());
 			this->ABut = (gcnew System::Windows::Forms::Button());
 			this->textBox1 = (gcnew System::Windows::Forms::TextBox());
-			this->PulseTB = (gcnew System::Windows::Forms::TextBox());
-			this->PulseButt = (gcnew System::Windows::Forms::Button());
 			this->statusStrip1 = (gcnew System::Windows::Forms::StatusStrip());
 			this->NMBPLSLBL = (gcnew System::Windows::Forms::ToolStripStatusLabel());
 			this->StanLBL = (gcnew System::Windows::Forms::ToolStripStatusLabel());
+			this->label2 = (gcnew System::Windows::Forms::Label());
+			this->MotorBox = (gcnew System::Windows::Forms::ComboBox());
+			this->Motor = (gcnew System::IO::Ports::SerialPort(this->components));
+			this->BeginTB = (gcnew System::Windows::Forms::TextBox());
+			this->EndTB = (gcnew System::Windows::Forms::TextBox());
+			this->label3 = (gcnew System::Windows::Forms::Label());
+			this->label4 = (gcnew System::Windows::Forms::Label());
+			this->panel1 = (gcnew System::Windows::Forms::Panel());
+			this->toolStripProgressBar1 = (gcnew System::Windows::Forms::ToolStripProgressBar());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->chart1))->BeginInit();
 			this->statusStrip1->SuspendLayout();
+			this->panel1->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// chart1
 			// 
 			chartArea2->Name = L"ChartArea1";
 			this->chart1->ChartAreas->Add(chartArea2);
-			this->chart1->Location = System::Drawing::Point(264, 8);
+			this->chart1->Dock = System::Windows::Forms::DockStyle::Fill;
+			this->chart1->Location = System::Drawing::Point(0, 0);
 			this->chart1->Name = L"chart1";
-			series3->ChartArea = L"ChartArea1";
-			series3->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
-			series3->Color = System::Drawing::Color::Red;
-			series3->Name = L"cap";
-			series4->ChartArea = L"ChartArea1";
-			series4->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
-			series4->Color = System::Drawing::Color::RoyalBlue;
-			series4->Name = L"loss";
-			series4->YAxisType = System::Windows::Forms::DataVisualization::Charting::AxisType::Secondary;
-			this->chart1->Series->Add(series3);
-			this->chart1->Series->Add(series4);
-			this->chart1->Size = System::Drawing::Size(912, 573);
+			series2->ChartArea = L"ChartArea1";
+			series2->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
+			series2->Color = System::Drawing::Color::Red;
+			series2->Name = L"cap";
+			this->chart1->Series->Add(series2);
+			this->chart1->Size = System::Drawing::Size(698, 596);
 			this->chart1->TabIndex = 0;
 			this->chart1->Text = L"chart1";
 			this->chart1->Click += gcnew System::EventHandler(this, &Form1::chart1_Click);
@@ -248,35 +259,19 @@ namespace Escort {
 			this->textBox1->Location = System::Drawing::Point(12, 69);
 			this->textBox1->Multiline = true;
 			this->textBox1->Name = L"textBox1";
-			this->textBox1->Size = System::Drawing::Size(236, 414);
+			this->textBox1->Size = System::Drawing::Size(236, 382);
 			this->textBox1->TabIndex = 11;
-			// 
-			// PulseTB
-			// 
-			this->PulseTB->Location = System::Drawing::Point(24, 499);
-			this->PulseTB->Name = L"PulseTB";
-			this->PulseTB->Size = System::Drawing::Size(100, 20);
-			this->PulseTB->TabIndex = 12;
-			this->PulseTB->Text = L"80";
-			// 
-			// PulseButt
-			// 
-			this->PulseButt->Location = System::Drawing::Point(130, 496);
-			this->PulseButt->Name = L"PulseButt";
-			this->PulseButt->Size = System::Drawing::Size(75, 23);
-			this->PulseButt->TabIndex = 13;
-			this->PulseButt->Text = L"Set";
-			this->PulseButt->UseVisualStyleBackColor = true;
-			this->PulseButt->Click += gcnew System::EventHandler(this, &Form1::PulseButt_Click);
 			// 
 			// statusStrip1
 			// 
-			this->statusStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->NMBPLSLBL, this->StanLBL});
+			this->statusStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->NMBPLSLBL, this->StanLBL, 
+				this->toolStripProgressBar1});
 			this->statusStrip1->Location = System::Drawing::Point(0, 604);
 			this->statusStrip1->Name = L"statusStrip1";
-			this->statusStrip1->Size = System::Drawing::Size(1216, 22);
+			this->statusStrip1->Size = System::Drawing::Size(964, 22);
 			this->statusStrip1->TabIndex = 14;
 			this->statusStrip1->Text = L"statusStrip1";
+			this->statusStrip1->ItemClicked += gcnew System::Windows::Forms::ToolStripItemClickedEventHandler(this, &Form1::statusStrip1_ItemClicked);
 			// 
 			// NMBPLSLBL
 			// 
@@ -290,14 +285,86 @@ namespace Escort {
 			this->StanLBL->Size = System::Drawing::Size(25, 17);
 			this->StanLBL->Text = L"N/A";
 			// 
+			// label2
+			// 
+			this->label2->AutoSize = true;
+			this->label2->Location = System::Drawing::Point(90, 557);
+			this->label2->Name = L"label2";
+			this->label2->Size = System::Drawing::Size(34, 13);
+			this->label2->TabIndex = 15;
+			this->label2->Text = L"Motor";
+			// 
+			// MotorBox
+			// 
+			this->MotorBox->FormattingEnabled = true;
+			this->MotorBox->Location = System::Drawing::Point(93, 573);
+			this->MotorBox->Name = L"MotorBox";
+			this->MotorBox->Size = System::Drawing::Size(75, 21);
+			this->MotorBox->TabIndex = 16;
+			// 
+			// BeginTB
+			// 
+			this->BeginTB->Location = System::Drawing::Point(12, 477);
+			this->BeginTB->Name = L"BeginTB";
+			this->BeginTB->Size = System::Drawing::Size(77, 20);
+			this->BeginTB->TabIndex = 17;
+			// 
+			// EndTB
+			// 
+			this->EndTB->Location = System::Drawing::Point(116, 477);
+			this->EndTB->Name = L"EndTB";
+			this->EndTB->Size = System::Drawing::Size(87, 20);
+			this->EndTB->TabIndex = 18;
+			// 
+			// label3
+			// 
+			this->label3->AutoSize = true;
+			this->label3->Location = System::Drawing::Point(9, 461);
+			this->label3->Name = L"label3";
+			this->label3->Size = System::Drawing::Size(29, 13);
+			this->label3->TabIndex = 19;
+			this->label3->Text = L"Start";
+			// 
+			// label4
+			// 
+			this->label4->AutoSize = true;
+			this->label4->Location = System::Drawing::Point(113, 461);
+			this->label4->Name = L"label4";
+			this->label4->Size = System::Drawing::Size(26, 13);
+			this->label4->TabIndex = 20;
+			this->label4->Text = L"End";
+			// 
+			// panel1
+			// 
+			this->panel1->Anchor = static_cast<System::Windows::Forms::AnchorStyles>((((System::Windows::Forms::AnchorStyles::Top | System::Windows::Forms::AnchorStyles::Bottom) 
+				| System::Windows::Forms::AnchorStyles::Left) 
+				| System::Windows::Forms::AnchorStyles::Right));
+			this->panel1->Controls->Add(this->chart1);
+			this->panel1->Location = System::Drawing::Point(254, 5);
+			this->panel1->Name = L"panel1";
+			this->panel1->Size = System::Drawing::Size(698, 596);
+			this->panel1->TabIndex = 21;
+			// 
+			// toolStripProgressBar1
+			// 
+			this->toolStripProgressBar1->Maximum = 1000;
+			this->toolStripProgressBar1->Name = L"toolStripProgressBar1";
+			this->toolStripProgressBar1->Size = System::Drawing::Size(300, 16);
+			this->toolStripProgressBar1->Style = System::Windows::Forms::ProgressBarStyle::Continuous;
+			// 
 			// Form1
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-			this->ClientSize = System::Drawing::Size(1216, 626);
+			this->ClientSize = System::Drawing::Size(964, 626);
+			this->Controls->Add(this->panel1);
+			this->Controls->Add(this->label4);
+			this->Controls->Add(this->label3);
+			this->Controls->Add(this->EndTB);
+			this->Controls->Add(this->BeginTB);
+			this->Controls->Add(this->MotorBox);
+			this->Controls->Add(this->label2);
 			this->Controls->Add(this->statusStrip1);
-			this->Controls->Add(this->PulseButt);
-			this->Controls->Add(this->PulseTB);
 			this->Controls->Add(this->textBox1);
 			this->Controls->Add(this->button2);
 			this->Controls->Add(this->ABut);
@@ -307,7 +374,6 @@ namespace Escort {
 			this->Controls->Add(this->ResetButton);
 			this->Controls->Add(this->PauseButt);
 			this->Controls->Add(this->RunButton);
-			this->Controls->Add(this->chart1);
 			this->Name = L"Form1";
 			this->Text = L"Form1";
 			this->FormClosing += gcnew System::Windows::Forms::FormClosingEventHandler(this, &Form1::Form1_FormClosing);
@@ -315,6 +381,7 @@ namespace Escort {
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->chart1))->EndInit();
 			this->statusStrip1->ResumeLayout(false);
 			this->statusStrip1->PerformLayout();
+			this->panel1->ResumeLayout(false);
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -325,89 +392,64 @@ namespace Escort {
 	private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e) {
 
 				 double x;
-				 StanLBL->Text=i.ToString()+"Testujma";
+				 x=begin+StepNum*0.5;
+				 StanLBL->Text="Krok "+i.ToString();
 				 BoxCar->Write("?1\r"); // Whats the value of analog input 1?
-				 BoxCar->Write("?c\r"); // Whats the state of counter C2?/ Reset said counter;
-				 if (!started&&Counter>0) {
-					 started=true;
-					 timer.stop();
-					 timer.start();
-					 reached_end.stop();
-					 reached_end.start();// Reset timer counting from last pulse
-
+				 toolStripProgressBar1->Value=(int)floor(1000*StepNum/(2*(end-begin)));
+				 boost::timer::cpu_timer tkrok;
+				 while (!ready&&tkrok.elapsed().wall<5e7){
 				 }
-				 if (started&&reached_end.elapsed().wall>PULSE_TIMEOUT*1e9) {
-					 started=false;
+				 if (ready) {
+					 xs.push_back(x);
+					 vals.push_back(BoxCarVal);
+					 std::cout<<x<<" "<<BoxCarVal<<std::endl;
+					 if (i%10==0){
+						 this->chart1->Series[0]->Points->AddXY(x,BoxCarVal);
+					 }
+					 ready=false;
+				 }
+				 String^ text="0"+((StepNum%4)+1).ToString();
+				 Motor->Write(text);
+				 StepNum++;
+				 i++;
+				 if (begin+StepNum*0.5>end) 
+				 {
 					 timer1->Enabled=false;
 					 textBox1->BackColor=Color::FromName("LimeGreen");
+					 Motor->Write("0");
 				 }
-				 if (started) {
-					 i++;
-					 if (Counter>0) {
-						 reached_end.stop();
-						 reached_end.start();
-					 }
-					 boost::timer::cpu_timer tkrok;
-					 while (!ready&&tkrok.elapsed().wall<5e7){
-					 }
-					 if (ready) {
-						 x=timer.elapsed().wall/1e9;
-						 xs.push_back(x);
-						 vals.push_back(BoxCarVal);
-						 cnts.push_back(Counter);
-						 if (i%10==0){
-							 this->chart1->Series[0]->Points->AddXY(x,BoxCarVal);
-							 this->chart1->Series[1]->Points->AddXY(x,Counter);
-						 }
-						 ready=false;
-					 }
+				 std::cout<<x<<" "<<timer.elapsed().wall/1e9<<std::endl;
 
-
-					 std::cout<<x<<" "<<timer.elapsed().wall/1e9<<std::endl;
-				 }
 			 }
 
 	private: System::Void RunButton_Click(System::Object^  sender, System::EventArgs^  e) {
 				 ABut->Enabled=false;
-				 this->NMBPLSLBL->Text=NUM_OF_PULSES.ToString()+" pulses/point";
 				 BoxCar->NewLine="\r";
 				 BoxCar->Open();
+				 Motor->Open();
 				 std::cout<<"Ports are open"<<std::endl;
 				 BoxCar->Write("W0\r"); // Set delay to 0
-				 BoxCar->Write("C\r"); // Set digital 2 as input and make it a counter;
-				 BoxCar->Write("?c\r"); //Read the value of counter and reset it;
-				 BoxCar->ReadLine(); // Discard the cvounter value;
+				 double::TryParse(BeginTB->Text,begin);
+				 double::TryParse(EndTB->Text,end);
 				 this->timer1->Enabled=true;
-				 
+				 StepNum=0;
 				 timer.start();
 			 }
 	private: System::Void ResetButton_Click(System::Object^  sender, System::EventArgs^  e) {
 				 this->chart1->Series[0]->Points->Clear();
-				 this->chart1->Series[1]->Points->Clear();
 			 }
 	private: System::Void ScanButton_Click(System::Object^  sender, System::EventArgs^  e) {
 				 for each (String^ s in System::IO::Ports::SerialPort::GetPortNames()) 
 				 {
 					 this->BoxCarBox->Items->Add(s);
+					 this->MotorBox->Items->Add(s);
 				 } 
 			 }
 	private: System::Void BoxCar_DataReceived(System::Object^  sender, System::IO::Ports::SerialDataReceivedEventArgs^  e) {
 				 double value;
-				 int counter;
 				 String^ line=BoxCar->ReadLine();
 				 Double::TryParse(line,value);
 				 BoxCarVal=value;
-				 line=BoxCar->ReadLine();
-				 Int32::TryParse(line,counter);
-				 Counter=counter;
-				 cumulative+=counter;
-				 if (counter!=0) written=false;
-				 if (cumulative % NUM_OF_PULSES==0&&cumulative!=0&&!written)//Last point in a packet of pulses
-				 {
-					 textBox1->Text+=cumulative.ToString()+" "+BoxCarVal.ToString()+"\r\n"; 
-					 written=true;
-				 }
-				 Console::WriteLine(line);
 				 ready=true;
 			 }
 	private: System::Void PauseButt_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -418,37 +460,40 @@ namespace Escort {
 					 StreamWriter^ sw = gcnew StreamWriter(saveFileDialog1->FileName+".dat");
 					 int size=xs.size();//chart1->Series[0]->Points->Count;
 					 for (i=0;i<size;i++){
-						 sw->WriteLine(xs[i].ToString()+" "+vals[i].ToString()+" "+cnts[i].ToString());
+						 sw->WriteLine(xs[i].ToString()+" "+vals[i].ToString());
 						 //chart1->Series[0]->Points[i]->XValue.ToString()+" "+chart1->Series[0]->Points[i]->YValues[0].ToString()+" "+chart1->Series[1]->Points[i]->YValues[0].ToString());
 					 }
 					 sw->Close();
-					 System::IO::StreamWriter^ swpnt=gcnew System::IO::StreamWriter(saveFileDialog1->FileName+"pnts.dat");
-					 swpnt->Write(textBox1->Text);
-					 swpnt->Close();
-
 				 }
 			 }
 	private: System::Void ABut_Click(System::Object^  sender, System::EventArgs^  e) {
 				 BoxCar->PortName=BoxCarBox->Text;
+				 Motor->PortName=MotorBox->Text;
 			 }
 	private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e) {
-				 std::string BoxCarport, escortport;
+				 std::string BoxCarport, Motorport;
 				 std::ifstream inpfile("ports.cfg");
 				 timer.stop();
-				 if(inpfile>>BoxCarport){
+				 if(inpfile>>BoxCarport>>Motorport){
 					 BoxCarBox->Text=gcnew String(BoxCarport.c_str());
+					 MotorBox->Text=gcnew String(Motorport.c_str());
 					 if (BoxCarBox->Text!="") BoxCar->PortName=BoxCarBox->Text;
+					 if (MotorBox->Text!="") Motor->PortName=MotorBox->Text;
 				 }
 			 }
 	private: System::Void Form1_FormClosing(System::Object^  sender, System::Windows::Forms::FormClosingEventArgs^  e) {
 				 System::IO::StreamWriter^ sw=gcnew System::IO::StreamWriter("ports.cfg");
-				 sw->WriteLine(BoxCarBox->Text);
+				 sw->WriteLine(BoxCarBox->Text+" "+MotorBox->Text);
 				 sw->Close();
-				 BoxCar->Close();
+				 if(BoxCar->IsOpen) BoxCar->Close();
+				 if(Motor->IsOpen){ 
+					 Motor->Write("0");
+					 Motor->Close();
+				 }
 			 }
-	private: System::Void PulseButt_Click(System::Object^  sender, System::EventArgs^  e) {
-Int32::TryParse(PulseTB->Text,NUM_OF_PULSES);
+
+	private: System::Void statusStrip1_ItemClicked(System::Object^  sender, System::Windows::Forms::ToolStripItemClickedEventArgs^  e) {
 			 }
-};
+	};
 }
 
