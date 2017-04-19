@@ -99,12 +99,14 @@
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="GDMGrapher.cpp" />
+    <ClCompile Include="stepper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Form1.h">
       <FileType>CppForm</FileType>
     </ClInclude>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Stepper.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="app.rc" />

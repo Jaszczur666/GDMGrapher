@@ -93,6 +93,8 @@ namespace Escort {
 	private: System::Windows::Forms::Label^  label4;
 	private: System::Windows::Forms::Panel^  panel1;
 	private: System::Windows::Forms::ToolStripProgressBar^  toolStripProgressBar1;
+	private: System::Windows::Forms::ListBox^  listBox1;
+
 
 
 
@@ -115,8 +117,8 @@ namespace Escort {
 		void InitializeComponent(void)
 		{
 			this->components = (gcnew System::ComponentModel::Container());
-			System::Windows::Forms::DataVisualization::Charting::ChartArea^  chartArea2 = (gcnew System::Windows::Forms::DataVisualization::Charting::ChartArea());
-			System::Windows::Forms::DataVisualization::Charting::Series^  series2 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
+			System::Windows::Forms::DataVisualization::Charting::ChartArea^  chartArea3 = (gcnew System::Windows::Forms::DataVisualization::Charting::ChartArea());
+			System::Windows::Forms::DataVisualization::Charting::Series^  series3 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
 			this->chart1 = (gcnew System::Windows::Forms::DataVisualization::Charting::Chart());
 			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
 			this->BoxCar = (gcnew System::IO::Ports::SerialPort(this->components));
@@ -133,6 +135,7 @@ namespace Escort {
 			this->statusStrip1 = (gcnew System::Windows::Forms::StatusStrip());
 			this->NMBPLSLBL = (gcnew System::Windows::Forms::ToolStripStatusLabel());
 			this->StanLBL = (gcnew System::Windows::Forms::ToolStripStatusLabel());
+			this->toolStripProgressBar1 = (gcnew System::Windows::Forms::ToolStripProgressBar());
 			this->label2 = (gcnew System::Windows::Forms::Label());
 			this->MotorBox = (gcnew System::Windows::Forms::ComboBox());
 			this->Motor = (gcnew System::IO::Ports::SerialPort(this->components));
@@ -141,7 +144,7 @@ namespace Escort {
 			this->label3 = (gcnew System::Windows::Forms::Label());
 			this->label4 = (gcnew System::Windows::Forms::Label());
 			this->panel1 = (gcnew System::Windows::Forms::Panel());
-			this->toolStripProgressBar1 = (gcnew System::Windows::Forms::ToolStripProgressBar());
+			this->listBox1 = (gcnew System::Windows::Forms::ListBox());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->chart1))->BeginInit();
 			this->statusStrip1->SuspendLayout();
 			this->panel1->SuspendLayout();
@@ -149,16 +152,16 @@ namespace Escort {
 			// 
 			// chart1
 			// 
-			chartArea2->Name = L"ChartArea1";
-			this->chart1->ChartAreas->Add(chartArea2);
+			chartArea3->Name = L"ChartArea1";
+			this->chart1->ChartAreas->Add(chartArea3);
 			this->chart1->Dock = System::Windows::Forms::DockStyle::Fill;
 			this->chart1->Location = System::Drawing::Point(0, 0);
 			this->chart1->Name = L"chart1";
-			series2->ChartArea = L"ChartArea1";
-			series2->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
-			series2->Color = System::Drawing::Color::Red;
-			series2->Name = L"cap";
-			this->chart1->Series->Add(series2);
+			series3->ChartArea = L"ChartArea1";
+			series3->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
+			series3->Color = System::Drawing::Color::Red;
+			series3->Name = L"cap";
+			this->chart1->Series->Add(series3);
 			this->chart1->Size = System::Drawing::Size(698, 596);
 			this->chart1->TabIndex = 0;
 			this->chart1->Text = L"chart1";
@@ -166,7 +169,7 @@ namespace Escort {
 			// 
 			// timer1
 			// 
-			this->timer1->Interval = 200;
+			this->timer1->Interval = 2000;
 			this->timer1->Tick += gcnew System::EventHandler(this, &Form1::timer1_Tick);
 			// 
 			// BoxCar
@@ -259,7 +262,7 @@ namespace Escort {
 			this->textBox1->Location = System::Drawing::Point(12, 69);
 			this->textBox1->Multiline = true;
 			this->textBox1->Name = L"textBox1";
-			this->textBox1->Size = System::Drawing::Size(236, 382);
+			this->textBox1->Size = System::Drawing::Size(236, 174);
 			this->textBox1->TabIndex = 11;
 			// 
 			// statusStrip1
@@ -285,6 +288,13 @@ namespace Escort {
 			this->StanLBL->Size = System::Drawing::Size(25, 17);
 			this->StanLBL->Text = L"N/A";
 			// 
+			// toolStripProgressBar1
+			// 
+			this->toolStripProgressBar1->Maximum = 1000;
+			this->toolStripProgressBar1->Name = L"toolStripProgressBar1";
+			this->toolStripProgressBar1->Size = System::Drawing::Size(300, 16);
+			this->toolStripProgressBar1->Style = System::Windows::Forms::ProgressBarStyle::Continuous;
+			// 
 			// label2
 			// 
 			this->label2->AutoSize = true;
@@ -304,14 +314,14 @@ namespace Escort {
 			// 
 			// BeginTB
 			// 
-			this->BeginTB->Location = System::Drawing::Point(12, 477);
+			this->BeginTB->Location = System::Drawing::Point(12, 264);
 			this->BeginTB->Name = L"BeginTB";
 			this->BeginTB->Size = System::Drawing::Size(77, 20);
 			this->BeginTB->TabIndex = 17;
 			// 
 			// EndTB
 			// 
-			this->EndTB->Location = System::Drawing::Point(116, 477);
+			this->EndTB->Location = System::Drawing::Point(116, 264);
 			this->EndTB->Name = L"EndTB";
 			this->EndTB->Size = System::Drawing::Size(87, 20);
 			this->EndTB->TabIndex = 18;
@@ -319,7 +329,7 @@ namespace Escort {
 			// label3
 			// 
 			this->label3->AutoSize = true;
-			this->label3->Location = System::Drawing::Point(9, 461);
+			this->label3->Location = System::Drawing::Point(9, 248);
 			this->label3->Name = L"label3";
 			this->label3->Size = System::Drawing::Size(29, 13);
 			this->label3->TabIndex = 19;
@@ -328,7 +338,7 @@ namespace Escort {
 			// label4
 			// 
 			this->label4->AutoSize = true;
-			this->label4->Location = System::Drawing::Point(113, 461);
+			this->label4->Location = System::Drawing::Point(113, 248);
 			this->label4->Name = L"label4";
 			this->label4->Size = System::Drawing::Size(26, 13);
 			this->label4->TabIndex = 20;
@@ -345,18 +355,21 @@ namespace Escort {
 			this->panel1->Size = System::Drawing::Size(698, 596);
 			this->panel1->TabIndex = 21;
 			// 
-			// toolStripProgressBar1
+			// listBox1
 			// 
-			this->toolStripProgressBar1->Maximum = 1000;
-			this->toolStripProgressBar1->Name = L"toolStripProgressBar1";
-			this->toolStripProgressBar1->Size = System::Drawing::Size(300, 16);
-			this->toolStripProgressBar1->Style = System::Windows::Forms::ProgressBarStyle::Continuous;
+			this->listBox1->FormattingEnabled = true;
+			this->listBox1->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"200", L"250", L"333", L"500", L"1000", L"2000"});
+			this->listBox1->Location = System::Drawing::Point(16, 339);
+			this->listBox1->Name = L"listBox1";
+			this->listBox1->Size = System::Drawing::Size(120, 95);
+			this->listBox1->TabIndex = 22;
 			// 
 			// Form1
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(964, 626);
+			this->Controls->Add(this->listBox1);
 			this->Controls->Add(this->panel1);
 			this->Controls->Add(this->label4);
 			this->Controls->Add(this->label3);
@@ -431,9 +444,15 @@ namespace Escort {
 				 BoxCar->Write("W0\r"); // Set delay to 0
 				 double::TryParse(BeginTB->Text,begin);
 				 double::TryParse(EndTB->Text,end);
+				 String^ curItem = listBox1->SelectedItem->ToString();
+				 int inter;
+				 int::TryParse(curItem, inter);
+				 //std::cout<<inter<<std::endl;
+				 if (inter!=0) this->timer1->Interval=inter;
 				 this->timer1->Enabled=true;
 				 StepNum=0;
 				 timer.start();
+				 timer1_Tick(sender,e);
 			 }
 	private: System::Void ResetButton_Click(System::Object^  sender, System::EventArgs^  e) {
 				 this->chart1->Series[0]->Points->Clear();
@@ -471,19 +490,24 @@ namespace Escort {
 				 Motor->PortName=MotorBox->Text;
 			 }
 	private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e) {
-				 std::string BoxCarport, Motorport;
+				 std::string BoxCarport, Motorport,beginstr,endstr,interv;
 				 std::ifstream inpfile("ports.cfg");
 				 timer.stop();
-				 if(inpfile>>BoxCarport>>Motorport){
+				 if(inpfile>>BoxCarport>>Motorport>>beginstr>>endstr>>interv){
 					 BoxCarBox->Text=gcnew String(BoxCarport.c_str());
 					 MotorBox->Text=gcnew String(Motorport.c_str());
+					 BeginTB->Text=gcnew String(beginstr.c_str());
+					 EndTB->Text=gcnew String(endstr.c_str());
 					 if (BoxCarBox->Text!="") BoxCar->PortName=BoxCarBox->Text;
 					 if (MotorBox->Text!="") Motor->PortName=MotorBox->Text;
+					 int index = listBox1->FindString(gcnew String(interv.c_str()));
+					 if ( index != -1 ) listBox1->SetSelected( index, true );
+
 				 }
 			 }
 	private: System::Void Form1_FormClosing(System::Object^  sender, System::Windows::Forms::FormClosingEventArgs^  e) {
 				 System::IO::StreamWriter^ sw=gcnew System::IO::StreamWriter("ports.cfg");
-				 sw->WriteLine(BoxCarBox->Text+" "+MotorBox->Text);
+				 sw->WriteLine(BoxCarBox->Text+" "+MotorBox->Text+" "+BeginTB->Text+" "+EndTB->Text+" "+listBox1->SelectedItem->ToString());
 				 sw->Close();
 				 if(BoxCar->IsOpen) BoxCar->Close();
 				 if(Motor->IsOpen){ 
@@ -494,6 +518,8 @@ namespace Escort {
 
 	private: System::Void statusStrip1_ItemClicked(System::Object^  sender, System::Windows::Forms::ToolStripItemClickedEventArgs^  e) {
 			 }
-	};
-}
+	private: System::Void comboBox1_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e) {
+			 }
+			 };
+	}
 
