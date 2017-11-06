@@ -3,12 +3,24 @@
 #include <string>
 #include <boost/asio/serial_port.hpp> 
 #include <boost/asio.hpp> 
+#include <iostream>
 class Stepper{
 public:
-	void SetPort(std::string PortName);
-	void Initialize();
+
+	Stepper(std::string port)
+		: io(), serial(io)
+	{
+	}
+
+	void writeString(std::string s);
+	void Finish();
+	void Send (std::string text);
+	void Initialize(std::string pname);
+	int StepNum;
+	void Step(int steps);
 private:
-	std::string _PortName;
+	boost::asio::io_service io;
+	boost::asio::serial_port serial;
 
 };
 #endif

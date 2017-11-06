@@ -1,22 +1,44 @@
 #pragma once
 int i=0;
 #include <boost/timer/timer.hpp>
+#include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <time.h>
 #include <math.h>
 #include <string>
 #include <fstream>
 #include <vector>
+#include "Stepper.hpp"
 using namespace System::IO;
 using namespace System::IO::Ports;
 #define BOOST_THREAD_USE_DLL
 boost::timer::cpu_timer timer;
 std::vector<double> xs,vals;
+std::string MotorPortName;
+Stepper Silnik("CCC");
 double begin=0;
 double end=0;
+bool finishedrun=false;
+int stepsperpoint=1;
+void MarshalString ( System::String ^ s, std::string& os ) {
+	using namespace System::Runtime::InteropServices;
+	const char* chars = 
+		(const char*)(Marshal::StringToHGlobalAnsi(s)).ToPointer();
+	os = chars;
+	Marshal::FreeHGlobal(System::IntPtr((void*)chars));
+}
+
+void MarshalString ( System::String ^ s, std::wstring& os ) {
+	using namespace System::Runtime::InteropServices;
+	const wchar_t* chars = 
+		(const wchar_t*)(Marshal::StringToHGlobalUni(s)).ToPointer();
+	os = chars;
+	Marshal::FreeHGlobal(System::IntPtr((void*)chars));
+}
+
 bool ready=false; // Is measurement value ready?
 double BoxCarVal; // Measured value
-long int StepNum=0; 
+//long int StepNum=0; 
 namespace Escort {
 
 	using namespace System;
@@ -94,6 +116,8 @@ namespace Escort {
 	private: System::Windows::Forms::Panel^  panel1;
 	private: System::Windows::Forms::ToolStripProgressBar^  toolStripProgressBar1;
 	private: System::Windows::Forms::ListBox^  listBox1;
+	private: System::Windows::Forms::Label^  label5;
+	private: System::Windows::Forms::ListBox^  listBox2;
 
 
 
@@ -117,8 +141,8 @@ namespace Escort {
 		void InitializeComponent(void)
 		{
 			this->components = (gcnew System::ComponentModel::Container());
-			System::Windows::Forms::DataVisualization::Charting::ChartArea^  chartArea3 = (gcnew System::Windows::Forms::DataVisualization::Charting::ChartArea());
-			System::Windows::Forms::DataVisualization::Charting::Series^  series3 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
+			System::Windows::Forms::DataVisualization::Charting::ChartArea^  chartArea1 = (gcnew System::Windows::Forms::DataVisualization::Charting::ChartArea());
+			System::Windows::Forms::DataVisualization::Charting::Series^  series1 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
 			this->chart1 = (gcnew System::Windows::Forms::DataVisualization::Charting::Chart());
 			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
 			this->BoxCar = (gcnew System::IO::Ports::SerialPort(this->components));
@@ -145,6 +169,8 @@ namespace Escort {
 			this->label4 = (gcnew System::Windows::Forms::Label());
 			this->panel1 = (gcnew System::Windows::Forms::Panel());
 			this->listBox1 = (gcnew System::Windows::Forms::ListBox());
+			this->label5 = (gcnew System::Windows::Forms::Label());
+			this->listBox2 = (gcnew System::Windows::Forms::ListBox());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->chart1))->BeginInit();
 			this->statusStrip1->SuspendLayout();
 			this->panel1->SuspendLayout();
@@ -152,16 +178,16 @@ namespace Escort {
 			// 
 			// chart1
 			// 
-			chartArea3->Name = L"ChartArea1";
-			this->chart1->ChartAreas->Add(chartArea3);
+			chartArea1->Name = L"ChartArea1";
+			this->chart1->ChartAreas->Add(chartArea1);
 			this->chart1->Dock = System::Windows::Forms::DockStyle::Fill;
 			this->chart1->Location = System::Drawing::Point(0, 0);
 			this->chart1->Name = L"chart1";
-			series3->ChartArea = L"ChartArea1";
-			series3->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
-			series3->Color = System::Drawing::Color::Red;
-			series3->Name = L"cap";
-			this->chart1->Series->Add(series3);
+			series1->ChartArea = L"ChartArea1";
+			series1->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
+			series1->Color = System::Drawing::Color::Red;
+			series1->Name = L"cap";
+			this->chart1->Series->Add(series1);
 			this->chart1->Size = System::Drawing::Size(698, 596);
 			this->chart1->TabIndex = 0;
 			this->chart1->Text = L"chart1";
@@ -321,7 +347,7 @@ namespace Escort {
 			// 
 			// EndTB
 			// 
-			this->EndTB->Location = System::Drawing::Point(116, 264);
+			this->EndTB->Location = System::Drawing::Point(164, 264);
 			this->EndTB->Name = L"EndTB";
 			this->EndTB->Size = System::Drawing::Size(87, 20);
 			this->EndTB->TabIndex = 18;
@@ -338,7 +364,7 @@ namespace Escort {
 			// label4
 			// 
 			this->label4->AutoSize = true;
-			this->label4->Location = System::Drawing::Point(113, 248);
+			this->label4->Location = System::Drawing::Point(198, 248);
 			this->label4->Name = L"label4";
 			this->label4->Size = System::Drawing::Size(26, 13);
 			this->label4->TabIndex = 20;
@@ -359,16 +385,36 @@ namespace Escort {
 			// 
 			this->listBox1->FormattingEnabled = true;
 			this->listBox1->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"200", L"250", L"333", L"500", L"1000", L"2000"});
-			this->listBox1->Location = System::Drawing::Point(16, 339);
+			this->listBox1->Location = System::Drawing::Point(12, 430);
 			this->listBox1->Name = L"listBox1";
 			this->listBox1->Size = System::Drawing::Size(120, 95);
 			this->listBox1->TabIndex = 22;
+			// 
+			// label5
+			// 
+			this->label5->AutoSize = true;
+			this->label5->Location = System::Drawing::Point(15, 414);
+			this->label5->Name = L"label5";
+			this->label5->Size = System::Drawing::Size(73, 13);
+			this->label5->TabIndex = 23;
+			this->label5->Text = L"Step time [ms]";
+			// 
+			// listBox2
+			// 
+			this->listBox2->FormattingEnabled = true;
+			this->listBox2->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"0.5", L"1", L"2", L"5", L"10"});
+			this->listBox2->Location = System::Drawing::Point(95, 264);
+			this->listBox2->Name = L"listBox2";
+			this->listBox2->Size = System::Drawing::Size(63, 69);
+			this->listBox2->TabIndex = 24;
 			// 
 			// Form1
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(964, 626);
+			this->Controls->Add(this->listBox2);
+			this->Controls->Add(this->label5);
 			this->Controls->Add(this->listBox1);
 			this->Controls->Add(this->panel1);
 			this->Controls->Add(this->label4);
@@ -403,12 +449,12 @@ namespace Escort {
 	private: System::Void chart1_Click(System::Object^  sender, System::EventArgs^  e) {
 			 }
 	private: System::Void timer1_Tick(System::Object^  sender, System::EventArgs^  e) {
-
+				 this->timer1->Enabled=false;
 				 double x;
-				 x=begin+StepNum*0.5;
+				 x=begin+Silnik.StepNum*0.5;
 				 StanLBL->Text="Krok "+i.ToString();
 				 BoxCar->Write("?1\r"); // Whats the value of analog input 1?
-				 toolStripProgressBar1->Value=(int)floor(1000*StepNum/(2*(end-begin)));
+				 toolStripProgressBar1->Value=(int)floor(1000*Silnik.StepNum/(2*(end-begin)));
 				 boost::timer::cpu_timer tkrok;
 				 while (!ready&&tkrok.elapsed().wall<5e7){
 				 }
@@ -421,25 +467,32 @@ namespace Escort {
 					 }
 					 ready=false;
 				 }
-				 String^ text="0"+((StepNum%4)+1).ToString();
-				 Motor->Write(text);
-				 StepNum++;
+				 if (!finishedrun) Silnik.Step(stepsperpoint);
+				// std::string text="0"+boost::lexical_cast<std::string>((Silnik.StepNum%4)+1);//.ToString();
+				 //Silnik.Send(text);
+
+//				 Motor->Write(text);
+				 //Silnik.StepNum++;
 				 i++;
-				 if (begin+StepNum*0.5>end) 
+				 if (begin+Silnik.StepNum*0.5>end) 
 				 {
 					 timer1->Enabled=false;
 					 textBox1->BackColor=Color::FromName("LimeGreen");
-					 Motor->Write("0");
+					 Silnik.Finish();
+					 finishedrun=true;
+	//				 Motor->Write("0");
 				 }
 				 std::cout<<x<<" "<<timer.elapsed().wall/1e9<<std::endl;
-
+				 if (!finishedrun) this->timer1->Enabled=true;
 			 }
 
 	private: System::Void RunButton_Click(System::Object^  sender, System::EventArgs^  e) {
 				 ABut->Enabled=false;
+				 MarshalString (MotorBox->Text, MotorPortName);
+				 Silnik.Initialize(MotorPortName);
 				 BoxCar->NewLine="\r";
 				 BoxCar->Open();
-				 Motor->Open();
+//				 Motor->Open();
 				 std::cout<<"Ports are open"<<std::endl;
 				 BoxCar->Write("W0\r"); // Set delay to 0
 				 double::TryParse(BeginTB->Text,begin);
@@ -447,12 +500,17 @@ namespace Escort {
 				 String^ curItem = listBox1->SelectedItem->ToString();
 				 int inter;
 				 int::TryParse(curItem, inter);
+				 String^ curstep = listBox2->SelectedItem->ToString();
+				 double steps;
+				 double::TryParse(curstep, steps);
+				 int stepsperpnt=(int)(2*steps);
+				 if (stepsperpnt!=0) stepsperpoint=stepsperpnt;
 				 //std::cout<<inter<<std::endl;
 				 if (inter!=0) this->timer1->Interval=inter;
 				 this->timer1->Enabled=true;
-				 StepNum=0;
+				 Silnik.StepNum=0;
 				 timer.start();
-				 timer1_Tick(sender,e);
+				 //timer1_Tick(sender,e);
 			 }
 	private: System::Void ResetButton_Click(System::Object^  sender, System::EventArgs^  e) {
 				 this->chart1->Series[0]->Points->Clear();
@@ -490,10 +548,10 @@ namespace Escort {
 				 Motor->PortName=MotorBox->Text;
 			 }
 	private: System::Void Form1_Load(System::Object^  sender, System::EventArgs^  e) {
-				 std::string BoxCarport, Motorport,beginstr,endstr,interv;
+				 std::string BoxCarport, Motorport,beginstr,endstr,interv,steps;
 				 std::ifstream inpfile("ports.cfg");
 				 timer.stop();
-				 if(inpfile>>BoxCarport>>Motorport>>beginstr>>endstr>>interv){
+				 if(inpfile>>BoxCarport>>Motorport>>beginstr>>endstr>>interv>>steps){
 					 BoxCarBox->Text=gcnew String(BoxCarport.c_str());
 					 MotorBox->Text=gcnew String(Motorport.c_str());
 					 BeginTB->Text=gcnew String(beginstr.c_str());
@@ -502,12 +560,14 @@ namespace Escort {
 					 if (MotorBox->Text!="") Motor->PortName=MotorBox->Text;
 					 int index = listBox1->FindString(gcnew String(interv.c_str()));
 					 if ( index != -1 ) listBox1->SetSelected( index, true );
+					 int index2 = listBox2->FindString(gcnew String(steps.c_str()));
+					 if ( index2 != -1 ) listBox2->SetSelected( index2, true );
 
 				 }
 			 }
 	private: System::Void Form1_FormClosing(System::Object^  sender, System::Windows::Forms::FormClosingEventArgs^  e) {
 				 System::IO::StreamWriter^ sw=gcnew System::IO::StreamWriter("ports.cfg");
-				 sw->WriteLine(BoxCarBox->Text+" "+MotorBox->Text+" "+BeginTB->Text+" "+EndTB->Text+" "+listBox1->SelectedItem->ToString());
+				 sw->WriteLine(BoxCarBox->Text+" "+MotorBox->Text+" "+BeginTB->Text+" "+EndTB->Text+" "+listBox1->SelectedItem->ToString()+" "+listBox2->SelectedItem->ToString());
 				 sw->Close();
 				 if(BoxCar->IsOpen) BoxCar->Close();
 				 if(Motor->IsOpen){ 

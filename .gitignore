@@ -41,3 +41,10 @@ _ReSharper*/
 *.ilk
 *.log
 *.opensdf
+
+#Ignore thumbnails created by Windows
+#Ignore files built by Visual Studio
+.vs/
+#Nuget packages folder
+packages/
+*.db
