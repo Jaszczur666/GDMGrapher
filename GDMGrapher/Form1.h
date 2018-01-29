@@ -453,8 +453,10 @@ namespace Escort {
 				 double x;
 				 x=begin+Silnik.StepNum*0.5;
 				 StanLBL->Text="Krok "+i.ToString();
+				 std::cout << " Krok " << i << std::endl;
 				 BoxCar->Write("?1\r"); // Whats the value of analog input 1?
 				 toolStripProgressBar1->Value=(int)floor(1000*Silnik.StepNum/(2*(end-begin)));
+				 std::cout << "Progress " << (int)floor(1000 * Silnik.StepNum / (2 * (end - begin)))<<std::endl;
 				 boost::timer::cpu_timer tkrok;
 				 while (!ready&&tkrok.elapsed().wall<5e7){
 				 }
@@ -467,14 +469,15 @@ namespace Escort {
 					 }
 					 ready=false;
 				 }
-				 if (!finishedrun) Silnik.Step(stepsperpoint);
+				 std::cout << "X bez warunku " << x << std::endl;
+				 if (!finishedrun&&!(x==end)) Silnik.Step(stepsperpoint);
 				// std::string text="0"+boost::lexical_cast<std::string>((Silnik.StepNum%4)+1);//.ToString();
 				 //Silnik.Send(text);
 
 //				 Motor->Write(text);
 				 //Silnik.StepNum++;
 				 i++;
-				 if (begin+Silnik.StepNum*0.5>end) 
+				 if (x==end) 
 				 {
 					 timer1->Enabled=false;
 					 textBox1->BackColor=Color::FromName("LimeGreen");
@@ -482,6 +485,7 @@ namespace Escort {
 					 finishedrun=true;
 	//				 Motor->Write("0");
 				 }
+				
 				 std::cout<<x<<" "<<timer.elapsed().wall/1e9<<std::endl;
 				 if (!finishedrun) this->timer1->Enabled=true;
 			 }
@@ -510,6 +514,7 @@ namespace Escort {
 				 this->timer1->Enabled=true;
 				 Silnik.StepNum=0;
 				 timer.start();
+				 std::cout << "The fun begins" <<std::endl;
 				 //timer1_Tick(sender,e);
 			 }
 	private: System::Void ResetButton_Click(System::Object^  sender, System::EventArgs^  e) {
